@@ -29,7 +29,9 @@ const Chat = () => {
     const messagesRef = firestore.collection('messages');
     const messagesQuery = messagesRef.orderBy('createAt');
     const [messages, loading] = useCollectionData(messagesQuery);
-
+    if (loading) {
+        return <Loader/>
+    }
     const sendMessage = async () => {
         const messageRef = messagesRef.doc();
         await messageRef.set({
@@ -41,47 +43,59 @@ const Chat = () => {
         });
         setValue('');
     };
+    const uniqueUsers = messages.reduce((acc, message) => {
+        if (!acc[message.displayName]) {
+            acc[message.displayName] = message;
+        }
+        return acc;
+    }, {});
+
+// Преобразование объекта уникальных имен пользователей в массив
+    const userList = Object.keys(uniqueUsers).map(name => uniqueUsers[name]);
+
+
     return (
-        <div className="flex h-screen">
+        <div className="flex h-[94vh]">
             <div className="w-1/4 bg-gray-800 text-white p-6">
                 <h1 className="text-2xl font-bold mb-6">Чат</h1>
-                <div className="space-y-4">
-                    <div className="flex items-center space-x-2">
-                        <div className="w-8 h-8 rounded-full bg-gray-600"></div>
-                        <div>
-                            <p className="text-sm font-medium">Имя пользователя</p>
-                            <p className="text-xs text-gray-400">Сообщение</p>
+                {userList?.map(user => (
+                    <div className="space-y-4 mt-3">
+                        <div className="flex items-center space-x-2">
+                            <div className="w-8 h-8 rounded-full bg-gray-600"><img src={user.photoURL} alt=""/></div>
+                            <div>
+                                <p className="text-sm font-medium">{user.displayName}</p>
+                            </div>
                         </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <div className="w-8 h-8 rounded-full bg-gray-600"></div>
-                        <div>
-                            <p className="text-sm font-medium">Имя пользователя</p>
-                            <p className="text-xs text-gray-400">Сообщение</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <div className="w-8 h-8 rounded-full bg-gray-600"></div>
-                        <div>
-                            <p className="text-sm font-medium">Имя пользователя</p>
-                            <p className="text-xs text-gray-400">Сообщение</p>
-                        </div>
-                    </div>
-                </div>
+
+                    </div>))}
             </div>
-            <div className="w-3/4 p-6">
-                <div className="h-full bg-gray-200 rounded-lg p-6 space-y-4">
-                    {messages.map(message =>
-                    <div className="flex items-center space-x-2">
-                        <div className="w-8 h-8 rounded-full bg-gray-600"><img src={message.photoURL} alt=""/></div>
-                        <div>
-                            <p className="text-sm font-medium">{message.displayName}</p>
-                            <p className="text-xs text-gray-400">Сообщение</p>
-                        </div>
+            <div className="w-3/4 pl-6 pr-6 ">
+                <div className="h-[95%] bg-gray-200 rounded-lg p-6 space-y-4">
+                    {messages?.map(message =>
+                        user.uid !== message.uid ?
+                        <div
+                            className={`flex items-center space-x-2 justify-start`}>
 
-                    </div>
+                            <div className="w-8 h-8 rounded-full bg-gray-600"><img src={message.photoURL} alt=""/></div>
+                            <div className="w-1/2">
+                                <div className="max-w-full">
+                                    <p className="text-sm font-medium break-all">{message.displayName}</p>
+                                    <p className="text-xs text-gray-400 break-words">{message.text}</p>
+                                </div>
+                            </div>
+                        </div> :
+                            <div
+                                className={`flex items-center space-x-2 justify-end`}>
+                                <div className="w-1/2">
+                                    <div className="max-w-full">
+                                        <p className="text-sm font-medium break-all text-end">{message.displayName}</p>
+                                        <p className="text-xs text-gray-400 break-words text-end">{message.text}</p>
+                                    </div>
+                                </div>
+                                <div className="w-8 h-8 rounded-full bg-gray-600"><img src={message.photoURL} alt=""/></div>
+
+                            </div>
                     )}
-
                 </div>
                 <div className="mt-6 flex items-center space-x-2">
                     <input type="text" className="flex-1 px-4 py-2 rounded-lg border border-gray-300"
